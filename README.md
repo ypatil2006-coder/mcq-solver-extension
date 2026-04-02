@@ -12,7 +12,7 @@
 | [v1.0](#v10) | Claude Only | First build — Claude AI, single key, solve once |
 | [v1.1](#v11) | Multi-Provider Tabs | 4 providers with tab switcher UI |
 | [v1.2](#v12) | CORS Fix | Added `anthropic-dangerous-direct-browser-access` header |
-| [v1.3](#v13) | Snipping Style | Simplified dropdown UI matching snipping extension |
+| [v1.3](#v13) | Snipping Style | Simplified dropdown UI |
 | [v1.4](#v14) | Auto Loop | Continuous loop across pages until test ends |
 | [v1.5](#v15) | Stealth Mode | Minimal UI, □/○ bullets, settings panel, stealth green dot |
 
