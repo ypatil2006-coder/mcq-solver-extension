@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MCQ Solver AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0a0a0f;--surface:#111118;--border:#1e1e2e;
+      --accent:#7c3aed;--accent-bright:#a855f7;--accent-glow:rgba(124,58,237,0.3);
+      --green:#22c55e;--green-dim:rgba(34,197,94,0.12);--red:#ef4444;--yellow:#eab308;
+      --text:#e2e8f0;--text-muted:#64748b;--text-dim:#334155;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{width:360px;min-height:480px;background:var(--bg);font-family:'Syne',sans-serif;color:var(--text)}
+    body::before{content:'';position:fixed;top:-80px;left:50%;transform:translateX(-50%);width:280px;height:160px;background:radial-gradient(ellipse,var(--accent-glow) 0%,transparent 70%);pointer-events:none;z-index:0}
+    .container{position:relative;z-index:1;padding:20px;display:flex;flex-direction:column;gap:16px}
+    .header{display:flex;align-items:center;justify-content:space-between}
+    .logo{display:flex;align-items:center;gap:10px}
+    .logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--accent-bright));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 0 20px var(--accent-glow)}
+    .logo-text{font-size:15px;font-weight:800;letter-spacing:-0.3px}
+    .logo-text span{color:var(--accent-bright)}
+    .badge{font-family:'Space Mono',monospace;font-size:9px;padding:3px 7px;background:var(--border);border:1px solid var(--text-dim);border-radius:20px;color:var(--text-muted)}
+    .section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
+    .section-label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);font-family:'Space Mono',monospace}
+    .input-row{display:flex;gap:8px;align-items:center}
+    .api-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:'Space Mono',monospace;font-size:11px;color:var(--text);outline:none;transition:border-color 0.2s}
+    .api-input:focus{border-color:var(--accent)}
+    .api-input::placeholder{color:var(--text-dim)}
+    .save-btn{background:var(--accent);border:none;border-radius:8px;padding:8px 12px;font-family:'Syne',sans-serif;font-size:11px;font-weight:600;color:white;cursor:pointer;transition:all 0.2s}
+    .save-btn:hover{background:var(--accent-bright)}
+    .key-status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);font-family:'Space Mono',monospace}
+    .key-status .dot{width:6px;height:6px;border-radius:50%;background:var(--text-dim)}
+    .key-status.saved .dot{background:var(--green);box-shadow:0 0 6px var(--green)}
+    .solve-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent) 0%,var(--accent-bright) 100%);border:none;border-radius:12px;font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;box-shadow:0 4px 24px var(--accent-glow)}
+    .solve-btn:hover{transform:translateY(-1px)}
+    .solve-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+    .solve-btn .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite;display:none}
+    .solve-btn.loading .spinner{display:block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .results{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:none}
+    .results.visible{display:block}
+    .results-header{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    .results-title{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);font-family:'Space Mono',monospace}
+    .results-count{font-family:'Space Mono',monospace;font-size:10px;color:var(--accent-bright);background:var(--accent-glow);padding:2px 8px;border-radius:20px}
+    .question-list{max-height:240px;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px}
+    .q-item{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+    .q-item.clicked{border-color:var(--green);background:var(--green-dim)}
+    .q-text{font-size:11px;color:var(--text);line-height:1.4;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .q-answer{display:flex;align-items:center;gap:6px;font-size:10px;font-family:'Space Mono',monospace}
+    .answer-tag{background:var(--accent-glow);color:var(--accent-bright);padding:1px 6px;border-radius:4px;font-weight:700}
+    .q-item.clicked .answer-tag{background:var(--green-dim);color:var(--green)}
+    .answer-text{color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px}
+    .status-tag{margin-left:auto;font-size:9px;padding:1px 6px;border-radius:4px}
+    .status-tag.ok{background:var(--green-dim);color:var(--green)}
+    .status-tag.fail{background:rgba(239,68,68,0.1);color:var(--red)}
+    .status-tag.skip{background:rgba(234,179,8,0.1);color:var(--yellow)}
+    .log{padding:10px 14px;font-family:'Space Mono',monospace;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border);line-height:1.6;max-height:70px;overflow-y:auto}
+    .log .log-line{display:block}
+    .log .log-line.success{color:var(--green)}
+    .log .log-line.error{color:var(--red)}
+    .log .log-line.info{color:var(--accent-bright)}
+    .footer{display:flex;align-items:center;justify-content:space-between;padding-top:4px}
+    .footer-note{font-family:'Space Mono',monospace;font-size:9px;color:var(--text-dim)}
+    .clear-btn{font-family:'Space Mono',monospace;font-size:9px;color:var(--text-muted);background:none;border:1px solid var(--border);border-radius:4px;padding:2px 8px;cursor:pointer;transition:all 0.15s}
+    .clear-btn:hover{border-color:var(--accent);color:var(--accent-bright)}
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="logo"><div class="logo-icon">🎯</div><div><div class="logo-text">MCQ<span>Solver</span></div></div></div>
+    <div class="badge">CLAUDE AI</div>
+  </div>
+  <div class="section">
+    <div class="section-label">Anthropic API Key</div>
+    <div class="input-row">
+      <input type="password" class="api-input" id="apiKey" placeholder="sk-ant-api03-…" />
+      <button class="save-btn" id="saveKey">Save</button>
+    </div>
+    <div class="key-status" id="keyStatus"><div class="dot"></div><span>No key saved</span></div>
+  </div>
+  <button class="solve-btn" id="solveBtn"><div class="spinner"></div><span class="btn-text">⚡ Solve This Page</span></button>
+  <div class="results" id="results">
+    <div class="results-header"><span class="results-title">Results</span><span class="results-count" id="resultsCount">0 found</span></div>
+    <div class="question-list" id="questionList"></div>
+    <div class="log" id="log"></div>
+  </div>
+  <div class="footer"><span class="footer-note">reads full page · auto-answers MCQs</span><button class="clear-btn" id="clearBtn">Clear</button></div>
+</div>
+<script src="popup.js"></script>
+</body>
+</html>

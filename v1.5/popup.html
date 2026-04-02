@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MCQ Solver</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 280px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      color: #e8e8e8;
+      font-size: 13px;
+    }
+
+    /* ── MAIN VIEW ── */
+    #main { display: flex; flex-direction: column; }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid #1e1e1e;
+    }
+
+    .app-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 0.2px;
+    }
+
+    .settings-btn {
+      background: none;
+      border: none;
+      color: #666;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: color 0.15s;
+      line-height: 1;
+    }
+    .settings-btn:hover { color: #ccc; }
+
+    .body-area { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+
+    /* Status indicator row */
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #333;
+      flex-shrink: 0;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    .dot.idle   { background: #444; }
+    .dot.active { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.7); animation: pulse 1.5s ease-in-out infinite; }
+    .dot.error  { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.7); }
+    .dot.done   { background: #22c55e; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+    .status-text { color: #888; font-size: 11px; font-family: monospace; }
+
+    /* Main start button */
+    .start-btn {
+      width: 100%;
+      padding: 11px;
+      background: #fff;
+      color: #0f0f0f;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+    }
+    .start-btn:hover { background: #e8e8e8; }
+    .start-btn.running {
+      background: #1a1a1a;
+      color: #ef4444;
+      border: 1px solid #2a2a2a;
+    }
+    .start-btn.running:hover { border-color: #ef4444; }
+    .start-btn .spinner {
+      width: 13px; height: 13px;
+      border: 2px solid rgba(0,0,0,0.2);
+      border-top-color: #0f0f0f;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    .start-btn.running .spinner { border-color: rgba(239,68,68,0.2); border-top-color: #ef4444; }
+    .start-btn.loading .spinner { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Solve once button */
+    .once-btn {
+      width: 100%;
+      padding: 9px;
+      background: none;
+      color: #666;
+      border: 1px solid #222;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .once-btn:hover { border-color: #444; color: #ccc; }
+
+    /* Stats row */
+    .stats {
+      display: flex;
+      gap: 8px;
+    }
+    .stat {
+      flex: 1;
+      background: #1a1a1a;
+      border-radius: 6px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .stat-num { font-size: 18px; font-weight: 700; color: #fff; }
+    .stat-label { font-size: 10px; color: #555; font-family: monospace; }
+
+    /* Message log */
+    .msg-box {
+      background: #141414;
+      border: 1px solid #1e1e1e;
+      border-radius: 8px;
+      padding: 10px;
+      max-height: 120px;
+      overflow-y: auto;
+      display: none;
+    }
+    .msg-box.has-msgs { display: block; }
+    .msg-box::-webkit-scrollbar { width: 3px; }
+    .msg-box::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+    .msg-line {
+      font-size: 11px;
+      font-family: monospace;
+      line-height: 1.6;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+    }
+    .msg-icon { flex-shrink: 0; margin-top: 1px; }
+    .msg-line.info  .msg-icon::before { content: '·'; color: #555; }
+    .msg-line.ok    .msg-icon::before { content: '✓'; color: #22c55e; }
+    .msg-line.err   .msg-icon::before { content: '✗'; color: #ef4444; }
+    .msg-line.warn  .msg-icon::before { content: '⚠'; color: #eab308; }
+    .msg-line.info  .msg-text { color: #666; }
+    .msg-line.ok    .msg-text { color: #4ade80; }
+    .msg-line.err   .msg-text { color: #f87171; }
+    .msg-line.warn  .msg-text { color: #fbbf24; }
+
+    /* ── SETTINGS VIEW ── */
+    #settings { display: none; flex-direction: column; }
+
+    .settings-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid #1e1e1e;
+    }
+    .back-btn {
+      background: none; border: none; color: #666;
+      cursor: pointer; font-size: 18px; line-height: 1;
+      padding: 0; transition: color 0.15s;
+    }
+    .back-btn:hover { color: #ccc; }
+    .settings-title { font-size: 13px; font-weight: 600; color: #fff; }
+
+    .settings-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 18px; }
+
+    .settings-section { display: flex; flex-direction: column; gap: 8px; }
+    .section-title {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #444;
+      font-family: monospace;
+    }
+
+    /* Select */
+    select {
+      width: 100%;
+      background: #1a1a1a;
+      border: 1px solid #222;
+      border-radius: 7px;
+      padding: 9px 28px 9px 10px;
+      font-size: 12px;
+      color: #e8e8e8;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23555'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      transition: border-color 0.15s;
+      font-family: monospace;
+    }
+    select:focus { border-color: #444; }
+    select option { background: #1a1a1a; }
+
+    /* Input */
+    .key-wrap { position: relative; }
+    .key-wrap input {
+      width: 100%;
+      background: #1a1a1a;
+      border: 1px solid #222;
+      border-radius: 7px;
+      padding: 9px 36px 9px 10px;
+      font-size: 11px;
+      color: #e8e8e8;
+      outline: none;
+      font-family: monospace;
+      transition: border-color 0.15s;
+    }
+    .key-wrap input:focus { border-color: #444; }
+    .key-wrap input::placeholder { color: #333; }
+    .eye-btn {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      font-size: 13px; opacity: 0.4; transition: opacity 0.15s;
+    }
+    .eye-btn:hover { opacity: 0.9; }
+
+    /* Save button */
+    .save-btn {
+      width: 100%;
+      padding: 9px;
+      background: #fff;
+      color: #0f0f0f;
+      border: none;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .save-btn:hover { background: #ddd; }
+
+    /* Toggle rows */
+    .toggle-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 2px 0;
+    }
+    .toggle-info { display: flex; flex-direction: column; gap: 1px; }
+    .toggle-label { font-size: 12px; color: #ccc; }
+    .toggle-desc  { font-size: 10px; color: #444; font-family: monospace; }
+
+    .toggle {
+      width: 32px; height: 18px;
+      background: #2a2a2a;
+      border: none;
+      border-radius: 18px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .toggle.on { background: #22c55e; }
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 12px; height: 12px;
+      background: #fff;
+      border-radius: 50%;
+      top: 3px; left: 3px;
+      transition: transform 0.2s;
+    }
+    .toggle.on::after { transform: translateX(14px); }
+  </style>
+</head>
+<body>
+
+<!-- ── MAIN ── -->
+<div id="main">
+  <div class="top-bar">
+    <span class="app-name">MCQ Solver</span>
+    <button class="settings-btn" id="openSettings" title="Settings">⚙</button>
+  </div>
+
+  <div class="body-area">
+    <!-- Status -->
+    <div class="status-row">
+      <div class="dot idle" id="statusDot"></div>
+      <span class="status-text" id="statusText">Ready</span>
+    </div>
+
+    <!-- Start loop -->
+    <button class="start-btn" id="loopBtn">
+      <div class="spinner"></div>
+      <span class="btn-text" id="loopBtnText">▶ Start Auto Loop</span>
+    </button>
+
+    <!-- Solve once -->
+    <button class="once-btn" id="onceBtn">⚡ Solve Current Page Only</button>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-num" id="answeredNum">0</span>
+        <span class="stat-label">answered</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num" id="pagesNum">0</span>
+        <span class="stat-label">pages</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num" id="typeNum">—</span>
+        <span class="stat-label">last type</span>
+      </div>
+    </div>
+
+    <!-- Message dialog -->
+    <div class="msg-box" id="msgBox"></div>
+  </div>
+</div>
+
+<!-- ── SETTINGS ── -->
+<div id="settings">
+  <div class="settings-header">
+    <button class="back-btn" id="closeSettings">←</button>
+    <span class="settings-title">Settings</span>
+  </div>
+
+  <div class="settings-body">
+
+    <!-- Model -->
+    <div class="settings-section">
+      <div class="section-title">AI Model</div>
+      <select id="providerSelect">
+        <option value="groq">Groq (Free)</option>
+        <option value="openai">OpenAI (gpt-4o-mini)</option>
+        <option value="anthropic">Claude (Haiku)</option>
+        <option value="gemini">Gemini (Flash)</option>
+      </select>
+    </div>
+
+    <!-- API Key -->
+    <div class="settings-section">
+      <div class="section-title" id="keyLabel">API Key</div>
+      <div class="key-wrap">
+        <input type="password" id="apiKey" placeholder="Paste key here…" autocomplete="off" spellcheck="false" />
+        <button class="eye-btn" id="eyeBtn">👁</button>
+      </div>
+      <button class="save-btn" id="saveBtn">Save</button>
+    </div>
+
+    <!-- UI Options -->
+    <div class="settings-section">
+      <div class="section-title">Display</div>
+
+      <div class="toggle-item">
+        <div class="toggle-info">
+          <span class="toggle-label">Show answer highlights</span>
+          <span class="toggle-desc">Purple glow on correct option</span>
+        </div>
+        <button class="toggle on" id="tHighlight"></button>
+      </div>
+
+      <div class="toggle-item">
+        <div class="toggle-info">
+          <span class="toggle-label">Show message dialog</span>
+          <span class="toggle-desc">Info/error popups on page</span>
+        </div>
+        <button class="toggle on" id="tDialog"></button>
+      </div>
+
+      <div class="toggle-item">
+        <div class="toggle-info">
+          <span class="toggle-label">Stealth mode</span>
+          <span class="toggle-desc">Hide everything, show green dot only</span>
+        </div>
+        <button class="toggle" id="tStealth"></button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

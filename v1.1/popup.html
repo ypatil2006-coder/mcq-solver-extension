@@ -1,0 +1,70 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>MCQ Solver AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#0a0a0f;--surface:#111118;--border:#1e1e2e;--accent:#7c3aed;--accent-bright:#a855f7;--accent-glow:rgba(124,58,237,0.3);--green:#22c55e;--green-dim:rgba(34,197,94,0.12);--red:#ef4444;--text:#e2e8f0;--text-muted:#64748b;--text-dim:#334155}
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:370px;min-height:520px;background:var(--bg);font-family:'Syne',sans-serif;color:var(--text)}
+.container{padding:18px;display:flex;flex-direction:column;gap:14px}
+.header{display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--accent-bright));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.logo-text{font-size:15px;font-weight:800}.logo-text span{color:var(--accent-bright)}
+.badge{font-family:'Space Mono',monospace;font-size:9px;padding:3px 7px;background:var(--border);border:1px solid var(--text-dim);border-radius:20px;color:var(--text-muted)}
+.section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.section-label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);font-family:'Space Mono',monospace}
+.provider-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.provider-tab{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;transition:all 0.18s}
+.provider-tab.active{border-color:var(--accent);background:rgba(124,58,237,0.12)}
+.provider-tab .p-icon{font-size:18px}
+.provider-tab .p-name{font-size:9px;font-family:'Space Mono',monospace;color:var(--text-muted)}
+.provider-tab.active .p-name{color:var(--accent-bright)}
+select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 28px 8px 10px;font-family:'Space Mono',monospace;font-size:11px;color:var(--text);outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2364748b'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+select option{background:#111118}
+.input-row{display:flex;gap:8px;align-items:center}
+.api-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:'Space Mono',monospace;font-size:11px;color:var(--text);outline:none}
+.api-input::placeholder{color:var(--text-dim)}
+.save-btn{background:var(--accent);border:none;border-radius:8px;padding:8px 12px;font-family:'Syne',sans-serif;font-size:11px;font-weight:600;color:white;cursor:pointer}
+.solve-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent) 0%,var(--accent-bright) 100%);border:none;border-radius:12px;font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 24px var(--accent-glow)}
+.solve-btn:disabled{opacity:0.5}
+.solve-btn .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite;display:none}
+.solve-btn.loading .spinner{display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.results{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:none}
+.results.visible{display:block}
+.results-header{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.results-title{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);font-family:'Space Mono',monospace}
+.results-count{font-family:'Space Mono',monospace;font-size:10px;color:var(--accent-bright);background:var(--accent-glow);padding:2px 8px;border-radius:20px}
+.question-list{max-height:200px;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px}
+.q-item{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.q-text{font-size:11px;color:var(--text);line-height:1.4;font-weight:600}
+.q-answer{display:flex;align-items:center;gap:6px;font-size:10px;font-family:'Space Mono',monospace}
+.answer-tag{background:var(--accent-glow);color:var(--accent-bright);padding:1px 6px;border-radius:4px;font-weight:700}
+.answer-text{color:var(--text-muted)}
+.log{padding:10px 14px;font-family:'Space Mono',monospace;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border);line-height:1.6;max-height:70px;overflow-y:auto}
+.log .log-line{display:block}.log .log-line.success{color:var(--green)}.log .log-line.error{color:var(--red)}.log .log-line.info{color:var(--accent-bright)}
+.footer{display:flex;align-items:center;justify-content:space-between;padding-top:2px}
+.footer-note{font-family:'Space Mono',monospace;font-size:9px;color:var(--text-dim)}
+.clear-btn{font-family:'Space Mono',monospace;font-size:9px;color:var(--text-muted);background:none;border:1px solid var(--border);border-radius:4px;padding:2px 8px;cursor:pointer}
+</style></head><body>
+<div class="container">
+  <div class="header"><div class="logo"><div class="logo-icon">🎯</div><div><div class="logo-text">MCQ<span>Solver</span></div></div></div><div class="badge">MULTI-MODEL</div></div>
+  <div class="section">
+    <div class="section-label">AI Provider</div>
+    <div class="provider-tabs">
+      <div class="provider-tab active" data-provider="anthropic"><span class="p-icon">🟣</span><span class="p-name">Claude</span></div>
+      <div class="provider-tab" data-provider="openai"><span class="p-icon">🟢</span><span class="p-name">OpenAI</span></div>
+      <div class="provider-tab" data-provider="gemini"><span class="p-icon">🔵</span><span class="p-name">Gemini</span></div>
+      <div class="provider-tab" data-provider="groq"><span class="p-icon">⚡</span><span class="p-name">Groq</span></div>
+    </div>
+    <select id="modelSelect"></select>
+    <div class="input-row"><input type="password" class="api-input" id="apiKey" placeholder="Paste API key…" autocomplete="off"/><button class="save-btn" id="saveKey">Save</button></div>
+  </div>
+  <button class="solve-btn" id="solveBtn"><div class="spinner"></div><span class="btn-text">⚡ Solve This Page</span></button>
+  <div class="results" id="results">
+    <div class="results-header"><span class="results-title">Results</span><span class="results-count" id="resultsCount">0 found</span></div>
+    <div class="question-list" id="questionList"></div>
+    <div class="log" id="log"></div>
+  </div>
+  <div class="footer"><span class="footer-note">reads full page · auto-answers MCQs</span><button class="clear-btn" id="clearBtn">Clear</button></div>
+</div>
+<script src="popup.js"></script></body></html>
