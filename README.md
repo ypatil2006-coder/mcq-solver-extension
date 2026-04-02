@@ -60,7 +60,7 @@
 - All providers working correctly
 
 ### v1.3
-**Snipping Extension Style** — Simplified UI design.
+- Simplified UI design.
 - Single dropdown for provider (no tabs)
 - One API key field that swaps placeholder per provider
 - 👁 eye toggle to show/hide key
@@ -151,4 +151,4 @@ This extension is for educational purposes. Use responsibly and in accordance wi
 
 ---
 
-*Made with ❤️ by Yash Patil*
+*Made  by Yash Patil*
