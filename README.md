@@ -15,6 +15,7 @@
 | [v1.3](#v13) | Snipping Style | Simplified dropdown UI |
 | [v1.4](#v14) | Auto Loop | Continuous loop across pages until test ends |
 | [v1.5](#v15) | Stealth Mode | Minimal UI, □/○ bullets, settings panel, stealth green dot |
+| [v1.7](#v17) | Optimization | Reduce the usage of token every loop |
 
 ---
 
